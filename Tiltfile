@@ -1,0 +1,5 @@
+docker_build('optimistic-message', './')
+k8s_yaml('deployment.yaml')
+k8s_yaml('autoinstrumentation.yaml')
+k8s_yaml('collector.yaml')
+k8s_resource(workload='optimistic-message-deployment', port_forwards=8080)

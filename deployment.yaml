@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: optimistic-message-deployment
+  labels:
+    app: optimistic-message
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: optimistic-message
+  template:
+    metadata:
+      labels:
+        app: optimistic-message
+      annotations:
+        instrumentation.opentelemetry.io/inject-go: "true"
+        instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/root/optimistic-message"
+    spec:
+      containers:
+      - name: optimistic-message
+        image: optimistic-message:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        securityContext:
+          capabilities:
+            add:
+            - SYS_PTRACE
+          privileged: true
+          runAsUser: 0
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: optimistic-message-service
+spec:
+  selector:
+    app: optimistic-message
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
